@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="804.0" prefWidth="1249.0" style="-fx-background-color: #9BD6E1;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.finance.finance_lab_pbo.LandingPageController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="804.0" prefWidth="1249.0" style="-fx-background-color: #9BD6E1;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.finance.finance_lab_pbo.RegisterPageController">
    <children>
       <Pane layoutX="414.0" layoutY="48.0" prefHeight="710.0" prefWidth="710.0" style="-fx-background-radius: 25px; -fx-background-color: #ADDBD2;">
          <children>
@@ -31,7 +31,7 @@
                   <Font size="20.0" />
                </font>
             </Button>
-            <TextField layoutX="46.0" layoutY="202.0" prefHeight="49.0" prefWidth="607.0" promptText="Enter Your Name" style="-fx-background-radius: 40px;" />
+            <TextField fx:id="nameField" layoutX="46.0" layoutY="202.0" prefHeight="49.0" prefWidth="607.0" promptText="Enter Your Name (min 2 characters)" style="-fx-background-radius: 40px;" onMouseClicked="#handleNameFieldFocus" />
             <Label layoutX="61.0" layoutY="168.0" prefHeight="42.0" prefWidth="320.0" text="Name">
                <font>
                   <Font size="20.0" />
@@ -42,19 +42,19 @@
                   <Font size="18.0" />
                </font>
             </Label>
-            <TextField layoutX="46.0" layoutY="294.0" prefHeight="49.0" prefWidth="607.0" promptText="Enter Your Email" style="-fx-background-radius: 40px;" />
+            <TextField fx:id="emailField" layoutX="46.0" layoutY="294.0" prefHeight="49.0" prefWidth="607.0" promptText="Enter Your Email (must contain @)" style="-fx-background-radius: 40px;" onMouseClicked="#handleEmailFieldFocus" />
             <Label layoutX="61.0" layoutY="349.0" prefHeight="42.0" prefWidth="320.0" text="Password">
                <font>
                   <Font size="18.0" />
                </font>
             </Label>
-            <TextField layoutX="46.0" layoutY="384.0" prefHeight="49.0" prefWidth="607.0" promptText="Enter Your Password" style="-fx-background-radius: 40px;" />
+            <TextField fx:id="passwordField" layoutX="46.0" layoutY="384.0" prefHeight="49.0" prefWidth="607.0" promptText="Password (min 6 chars, 1 uppercase, 1 number)" style="-fx-background-radius: 40px;" onMouseClicked="#handlePasswordFieldFocus" />
             <Label layoutX="61.0" layoutY="439.0" prefHeight="42.0" prefWidth="320.0" text="Confirm Password">
                <font>
                   <Font size="18.0" />
                </font>
             </Label>
-            <TextField layoutX="46.0" layoutY="474.0" prefHeight="49.0" prefWidth="607.0" promptText="Enter Your Password" style="-fx-background-radius: 40px;" />
+            <TextField fx:id="confirmPasswordField" layoutX="46.0" layoutY="474.0" prefHeight="49.0" prefWidth="607.0" promptText="Confirm Your Password" style="-fx-background-radius: 40px;" onMouseClicked="#handleConfirmPasswordFieldFocus" />
          </children>
       </Pane>
    </children>

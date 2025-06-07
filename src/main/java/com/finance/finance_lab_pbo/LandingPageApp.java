@@ -46,7 +46,7 @@ public class LandingPageApp extends Application {
             // Create scene and set up stage
             // Create scene and set up stage
             Scene scene = new Scene(root);
-            primaryStage.setTitle("Ayo Simpan - Save Money App");
+            primaryStage.setTitle("Ayo Simpan - Landing Page");
             primaryStage.setScene(scene);
             primaryStage.setMaximized(true);
             primaryStage.show();

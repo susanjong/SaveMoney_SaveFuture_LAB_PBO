@@ -1,3 +1,4 @@
+
 package com.finance.finance_lab_pbo;
 
 import javafx.application.Application;
@@ -7,7 +8,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.net.URL;
 
-public class LoginPageApp extends Application {
+public class RegisterApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -16,16 +17,16 @@ public class LoginPageApp extends Application {
             URL fxmlUrl = null;
 
             // Try path 1: In resources root
-            fxmlUrl = getClass().getResource("/Login.fxml");
+            fxmlUrl = getClass().getResource("/Register.fxml");
 
             if (fxmlUrl == null) {
                 // Try path 2: In same package as this class
-                fxmlUrl = getClass().getResource("Login.fxml");
+                fxmlUrl = getClass().getResource("Register.fxml");
             }
 
             if (fxmlUrl == null) {
                 // Try path 3: With full package path
-                fxmlUrl = getClass().getResource("/com/finance/finance_lab_pbo/Login.fxml");
+                fxmlUrl = getClass().getResource("/com/finance/finance_lab_pbo/Regsiter.fxml");
             }
 
             // Load FXML
@@ -34,7 +35,7 @@ public class LoginPageApp extends Application {
 
             // Create scene and set up stage
             Scene scene = new Scene(root);
-            primaryStage.setTitle("Ayo Simpan - Login Page");
+            primaryStage.setTitle("Ayo Simpan - Register Page");
             primaryStage.setScene(scene);
             primaryStage.setMaximized(true);
             primaryStage.show();
