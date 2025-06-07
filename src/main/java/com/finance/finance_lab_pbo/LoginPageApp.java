@@ -34,7 +34,7 @@ public class LoginPageApp extends Application {
 
             // Create scene and set up stage
             Scene scene = new Scene(root);
-            primaryStage.setTitle("Ayo Simpan - Login Page");
+            primaryStage.setTitle("Ayo Simpan - Login");
             primaryStage.setScene(scene);
             primaryStage.setMaximized(true);
             primaryStage.show();
