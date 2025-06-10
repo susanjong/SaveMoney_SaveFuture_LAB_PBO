@@ -20,21 +20,21 @@
                   <Font name="System Bold" size="14.0" />
                </font>
             </Button>
-            <Button fx:id="dashboardBtn" mnemonicParsing="false" onAction="#onDashboardClick" prefWidth="170.0" prefHeight="45.0" 
+            <Button fx:id="dashboardBtn" mnemonicParsing="false" onAction="#handleNavigation" prefWidth="170.0" prefHeight="45.0" 
                     style="-fx-background-color: #FFFFFF; -fx-border-radius: 25; -fx-text-fill: #365580; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 2);" 
                     text="Dashboard">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
             </Button>
-            <Button fx:id="incomeBtn" mnemonicParsing="false" onAction="#onIncomeClick" prefWidth="170.0" prefHeight="45.0" 
+            <Button fx:id="incomeBtn" mnemonicParsing="false" onAction="#handleNavigation" prefWidth="170.0" prefHeight="45.0" 
                     style="-fx-background-color: transparent; -fx-border-color: rgba(255,255,255,0.3); -fx-border-width: 1.5; -fx-border-radius: 25; -fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 14px; -fx-cursor: hand;" 
                     text="Income">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
             </Button>
-            <Button fx:id="spendingBtn" mnemonicParsing="false" onAction="#onSpendingClick" prefWidth="170.0" prefHeight="45.0" 
+            <Button fx:id="spendingBtn" mnemonicParsing="false" onAction="#handleNavigation" prefWidth="170.0" prefHeight="45.0" 
                     style="-fx-background-color: transparent; -fx-border-color: rgba(255,255,255,0.3); -fx-border-width: 1.5; -fx-border-radius: 25; -fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 14px; -fx-cursor: hand;" 
                     text="Spending">
                <font>

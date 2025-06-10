@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <left>
+      <!-- Sidebar Navigation -->
+      <VBox prefWidth="160.0" style="-fx-background-color: #334155;" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="profileBtn" mnemonicParsing="false" onAction="#navigateToProfile" prefHeight="45.0" prefWidth="140.0" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: white; -fx-border-radius: 20; -fx-background-radius: 20;" text="Profile">
+               <VBox.margin>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="20.0" />
+               </VBox.margin>
+            </Button>
+            <Button fx:id="dashboardBtn" mnemonicParsing="false" onAction="#navigateToDashboard" prefHeight="45.0" prefWidth="140.0" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: white; -fx-border-radius: 20; -fx-background-radius: 20;" text="Dashboard">
+               <VBox.margin>
+                  <Insets bottom="10.0" left="10.0" right="10.0" />
+               </VBox.margin>
+            </Button>
+            <Button fx:id="incomeBtn" mnemonicParsing="false" prefHeight="45.0" prefWidth="140.0" style="-fx-background-color: white; -fx-text-fill: #334155; -fx-border-radius: 20; -fx-background-radius: 20;" text="Income">
+               <VBox.margin>
+                  <Insets bottom="10.0" left="10.0" right="10.0" />
+               </VBox.margin>
+            </Button>
+            <Button fx:id="spendingBtn" mnemonicParsing="false" onAction="#navigateToSpending" prefHeight="45.0" prefWidth="140.0" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: white; -fx-border-radius: 20; -fx-background-radius: 20;" text="Spending">
+               <VBox.margin>
+                  <Insets bottom="10.0" left="10.0" right="10.0" />
+               </VBox.margin>
+            </Button>
+         </children>
+      </VBox>
+   </left>
+   <center>
+      <!-- Main Content Area -->
+      <VBox style="-fx-background-color: linear-gradient(to bottom, #0891b2, #a7f3d0);">
+         <children>
+            <!-- Header -->
+            <HBox alignment="CENTER" prefHeight="80.0">
+               <children>
+                  <Label text="Track your income!" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="28.0" />
+                     </font>
+                  </Label>
+               </children>
+            </HBox>
+            
+            <!-- Content Container -->
+            <HBox spacing="20.0" VBox.vgrow="ALWAYS">
+               <children>
+                  <!-- Income Table Section -->
+                  <VBox prefWidth="500.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <TableView fx:id="incomeTable" prefHeight="350.0">
+                           <columns>
+                              <TableColumn fx:id="noColumn" prefWidth="50.0" text="No" />
+                              <TableColumn fx:id="activityColumn" prefWidth="150.0" text="Activity" />
+                              <TableColumn fx:id="incomeColumn" prefWidth="150.0" text="Income" />
+                              <TableColumn fx:id="dateColumn" prefWidth="120.0" text="Date" />
+                           </columns>
+                        </TableView>
+                        
+                        <!-- Summary Section -->
+                        <HBox spacing="20.0" style="-fx-padding: 20;">
+                           <children>
+                              <VBox>
+                                 <children>
+                                    <Label text="Total Income :" textFill="WHITE">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <VBox>
+                                 <children>
+                                    <Label fx:id="totalIncomeLabel" style="-fx-background-color: #e5e7eb; -fx-padding: 5 10; -fx-background-radius: 5;" text="Rp 40.000.000">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <VBox>
+                                 <children>
+                                    <Label text="Most Income :" textFill="WHITE">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <VBox>
+                                 <children>
+                                    <Label fx:id="mostIncomeLabel" style="-fx-background-color: #e5e7eb; -fx-padding: 5 10; -fx-background-radius: 5;" text="Rp 10.000.000">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        
+                        <!-- Action Buttons -->
+                        <HBox alignment="CENTER_RIGHT" spacing="10.0" style="-fx-padding: 20;">
+                           <children>
+                              <Button fx:id="deleteBtn" mnemonicParsing="false" onAction="#deleteActivity" style="-fx-background-color: #ef4444; -fx-text-fill: white; -fx-background-radius: 5;" text="Delete Activity" />
+                              <Button fx:id="updateBtn" mnemonicParsing="false" onAction="#updateActivity" style="-fx-background-color: #22c55e; -fx-text-fill: white; -fx-background-radius: 5;" text="Update Activity" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <HBox.margin>
+                        <Insets bottom="20.0" left="20.0" right="10.0" top="20.0" />
+                     </HBox.margin>
+                  </VBox>
+                  
+                  <!-- Add Activity Section -->
+                  <VBox prefWidth="250.0" style="-fx-background-color: rgba(255, 255, 255, 0.2); -fx-background-radius: 10;">
+                     <children>
+                        <Label text="Activity" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="5.0" />
+                           </VBox.margin>
+                        </Label>
+                        <TextField fx:id="activityField" style="-fx-background-radius: 5;">
+                           <VBox.margin>
+                              <Insets bottom="15.0" />
+                           </VBox.margin>
+                        </TextField>
+                        
+                        <Label text="Income" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="5.0" />
+                           </VBox.margin>
+                        </Label>
+                        <TextField fx:id="incomeField" style="-fx-background-radius: 5;">
+                           <VBox.margin>
+                              <Insets bottom="15.0" />
+                           </VBox.margin>
+                        </TextField>
+                        
+                        <Label text="Date" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="5.0" />
+                           </VBox.margin>
+                        </Label>
+                        <DatePicker fx:id="datePicker" style="-fx-background-radius: 5;">
+                           <VBox.margin>
+                              <Insets bottom="20.0" />
+                           </VBox.margin>
+                        </DatePicker>
+                        
+                        <Button fx:id="addActivityBtn" mnemonicParsing="false" onAction="#addActivity" prefWidth="200.0" style="-fx-background-color: #22c55e; -fx-text-fill: white; -fx-background-radius: 5;" text="Add Activity">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                        </Button>
+                     </children>
+                     <HBox.margin>
+                        <Insets bottom="20.0" left="10.0" right="20.0" top="20.0" />
+                     </HBox.margin>
+                     <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                     </padding>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </center>
+</BorderPane>

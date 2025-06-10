@@ -3,9 +3,16 @@ package com.finance.finance_lab_pbo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
+import java.io.IOException;
+
+import javafx.event.ActionEvent;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -105,21 +112,58 @@ public class DashboardController implements Initializable {
     }
 
     @FXML
-    private void onDashboardClick() {
-        // Dashboard is already active
-        System.out.println("Dashboard clicked");
-    }
-
-    @FXML
-    private void onIncomeClick() {
-        // Navigate to income page
-        System.out.println("Income clicked");
-    }
-
-    @FXML
-    private void onSpendingClick() {
-        // Navigate to spending page
-        System.out.println("Spending clicked");
+    void handleNavigation(ActionEvent event) {
+        Object source = event.getSource();
+        
+        try {
+            String fxmlFile = "";
+            
+            if (source == profileBtn) {
+                fxmlFile = "/com/finance/finance_lab_pbo/Profile.fxml";
+            } else if (source == dashboardBtn) {
+                fxmlFile = "/com/finance/finance_lab_pbo/Dashboard.fxml";
+            } else if (source == incomeBtn) {
+                fxmlFile = "/com/finance/finance_lab_pbo/Income.fxml";
+            } else if (source == spendingBtn) {
+                fxmlFile = "/com/finance/finance_lab_pbo/Spending.fxml";
+            } else {
+                return; // Unknown button
+            }
+            
+            if (!fxmlFile.isEmpty()) {
+                URL url = getClass().getResource(fxmlFile);
+                
+                if (url == null) {
+                    // Try alternative path format if the first attempt fails
+                    String altPath = fxmlFile.replace("/com/finance/finance_lab_pbo/", "/");
+                    url = getClass().getResource(altPath);
+                    
+                    if (url == null) {
+                        // Try one more alternative - without leading slash
+                        String noSlashPath = fxmlFile.substring(1);
+                        url = getClass().getClassLoader().getResource(noSlashPath);
+                        
+                        if (url == null) {
+                            showAlert("Navigation Error", 
+                                "Could not find FXML file: " + fxmlFile + 
+                                "\nPlease check if the file exists in the resources folder.");
+                            return;
+                        }
+                    }
+                }
+                
+                Parent root = FXMLLoader.load(url);
+                Stage stage = (Stage) ((Button) source).getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.show();
+            }
+            
+        } catch (IOException e) {
+            showAlert("Navigation Error", 
+                    "Could not navigate to the requested page: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -180,6 +224,15 @@ public class DashboardController implements Initializable {
         }
         
         transactionTable.setItems(filteredData);
+    }
+
+    // Updated showAlert method to match the usage pattern
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     // Inner class for Transaction data model
