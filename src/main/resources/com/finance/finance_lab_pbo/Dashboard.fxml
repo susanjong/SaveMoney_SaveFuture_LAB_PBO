@@ -141,6 +141,8 @@
                                   style="-fx-text-fill: #FFFFFF; -fx-background-radius: 18; -fx-border-radius: 18;" />
                         <ComboBox fx:id="periodComboBox" onAction="#onPeriodChange" promptText="1 week" prefWidth="120.0" prefHeight="35.0"
                                   style="-fx-text-fill: #FFFFFF; -fx-background-radius: 18; -fx-border-radius: 18;" />
+                        <TextField fx:id="yearTextField" onAction="#onYearChange" promptText="Year" prefWidth="80.0" prefHeight="35.0"
+                                  style="-fx-text-fill: #000000; -fx-background-radius: 18; -fx-border-radius: 18;" />
                         <ComboBox fx:id="filterComboBox" onAction="#onFilterChange" promptText="Show All" prefWidth="120.0" prefHeight="35.0"
                                   style="-fx-text-fill: #FFFFFF; -fx-background-radius: 18; -fx-border-radius: 18;" />
                         <Region HBox.hgrow="ALWAYS" />

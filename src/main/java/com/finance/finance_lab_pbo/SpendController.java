@@ -9,6 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import com.finance.finance_lab_pbo.model.SpendingCategory;
@@ -104,18 +107,17 @@ public class SpendController implements Initializable {
     private ComboBox<String> monthFilterComboBox;
     private String selectedMonth = null;
     
-    private ObservableList<SpendingDisplay> spendingData = FXCollections.observableArrayList();
+    // Data - Store all data in memory
+    private List<SpendingData> allSpendingData = new ArrayList<>(); 
+    private ObservableList<SpendingDisplay> spendingData = FXCollections.observableArrayList(); 
     private int selectedId = -1;
     private String currentFilter = "ALL";
     
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // Setup ComboBox with categories
         categoryComboBox.setItems(FXCollections.observableArrayList(SpendingCategory.values()));
         
-        // Set up table columns
-        noColumn.setCellValueFactory(cellData -> 
-            new SimpleStringProperty(String.valueOf(spendingData.indexOf(cellData.getValue()) + 1)));
+        noColumn.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(spendingData.indexOf(cellData.getValue()) + 1)));
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
         descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
         amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
@@ -132,189 +134,154 @@ public class SpendController implements Initializable {
             }
         });
 
+        // Setup month filter ComboBox
         ObservableList<String> months = FXCollections.observableArrayList(
             "All Months", "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         );
         monthFilterComboBox.setItems(months);
 
+        // Add listeners for filter controls
         monthFilterComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             selectedMonth = newVal;
-            loadSpendingData();
-            updateTotals();
+            applyFilters();
         });
 
         yearFilterField.textProperty().addListener((obs, oldVal, newVal) -> {
             selectedYear = newVal.trim().isEmpty() ? null : newVal.trim();
-            loadSpendingData();
-            updateTotals();
+            applyFilters();
         });
+
+        loadAllSpendingFromDatabase();
+        applyFilters();
         
-        // Load data from database
-        loadSpendingData();
-        updateTotals();
+        datePicker.setValue(LocalDate.now());
     }
     
-    private void loadSpendingData() {
-        spendingData.clear();
-        String sql = buildFilterQuery();
+    private void loadAllSpendingFromDatabase() {
+        allSpendingData.clear();
+        String sql = "SELECT id, category, description, amount, date FROM spending ORDER BY date DESC";
         
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
             
-            setFilterParameters(stmt);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    SpendingDisplay display = new SpendingDisplay(
-                        rs.getInt("id"),
-                        rs.getString("category"),
-                        rs.getString("description"),
-                        formatCurrency(rs.getBigDecimal("amount")),
-                        rs.getDate("date").toLocalDate().toString()
-                    );
-                    spendingData.add(display);
-                }
+            while (rs.next()) {
+                SpendingData data = new SpendingData(
+                    rs.getInt("id"),
+                    rs.getString("category"),
+                    rs.getString("description"),
+                    rs.getBigDecimal("amount"),
+                    rs.getDate("date").toLocalDate()
+                );
+                allSpendingData.add(data);
             }
         } catch (SQLException e) {
             showAlert("Database Error", "Failed to load spending data: " + e.getMessage());
         }
     }
     
-    private String buildFilterQuery() {
-        String baseQuery = "SELECT id, category, description, amount, date FROM spending";
-        String whereClause = "";
-
-        if (selectedMonth != null && !selectedMonth.equals("All Months")) {
-            int monthNum = monthFilterComboBox.getSelectionModel().getSelectedIndex(); 
-            whereClause = " WHERE EXTRACT(MONTH FROM date) = " + monthNum;
+    private void applyFilters() {
+        spendingData.clear();
+        
+        LocalDate now = LocalDate.now();
+        LocalDate filterDate = null;
+        
+        switch (currentFilter) {
+            case "1WEEK":
+                filterDate = now.minusWeeks(1);
+                break;
+            case "1MONTH":
+                filterDate = now.minusMonths(1);
+                break;
+            case "1YEAR":
+                filterDate = now.minusYears(1);
+                break;
         }
+        
+        for (SpendingData data : allSpendingData) {
+            boolean matchesFilter = true;
+            
+            if (filterDate != null && data.getDate().isBefore(filterDate)) {
+                matchesFilter = false;
+            }
+            
+            if (selectedMonth != null && !selectedMonth.equals("All Months")) {
+                int monthNum = monthFilterComboBox.getSelectionModel().getSelectedIndex();
+                if (data.getDate().getMonthValue() != monthNum) {
+                    matchesFilter = false;
+                }
+            }
+            
+            if (selectedYear != null && !selectedYear.isEmpty()) {
+                try {
+                    int year = Integer.parseInt(selectedYear);
+                    if (data.getDate().getYear() != year) {
+                        matchesFilter = false;
+                    }
+                } catch (NumberFormatException e) {
+                }
+            }
 
-        if (selectedYear != null && !selectedYear.isEmpty()) {
-            if (whereClause.isEmpty()) {
-                whereClause = " WHERE EXTRACT(YEAR FROM date) = " + selectedYear;
-            } else {
-                whereClause += " AND EXTRACT(YEAR FROM date) = " + selectedYear;
+            if (matchesFilter) {
+                SpendingDisplay display = new SpendingDisplay(
+                    data.getId(),
+                    data.getCategory(),
+                    data.getDescription(),
+                    formatCurrency(data.getAmount()),
+                    data.getDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                );
+                spendingData.add(display);
             }
         }
-
-        switch (currentFilter) {
-            case "1WEEK":
-            case "1MONTH":
-            case "1YEAR":
-                if (whereClause.isEmpty()) {
-                    whereClause = " WHERE date >= ?";
-                } else {
-                    whereClause += " AND date >= ?";
-                }
-                break;
-        }
         
-        return baseQuery + whereClause + " ORDER BY date DESC";
-    }
-    
-    private void setFilterParameters(PreparedStatement stmt) throws SQLException {
-        LocalDate now = LocalDate.now();
-        int paramIndex = 1;
-        
-        switch (currentFilter) {
-            case "1WEEK":
-                stmt.setDate(paramIndex, java.sql.Date.valueOf(now.minusWeeks(1)));
-                break;
-            case "1MONTH":
-                stmt.setDate(paramIndex, java.sql.Date.valueOf(now.minusMonths(1)));
-                break;
-            case "1YEAR":
-                stmt.setDate(paramIndex, java.sql.Date.valueOf(now.minusYears(1)));
-                break;
-        }
+        updateTotals();
     }
     
     private void updateTotals() {
-        String sql = buildTotalQuery();
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal maxAmount = BigDecimal.ZERO;
         
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        for (SpendingDisplay display : spendingData) {
+            String amountText = display.getAmount().replace("Rp ", "").replace(".", "").replace(",", "");  // Tambah replace koma
+            BigDecimal amount = new BigDecimal(amountText);
             
-            setFilterParameters(stmt);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    BigDecimal total = rs.getBigDecimal("total");
-                    BigDecimal maxAmount = rs.getBigDecimal("max_amount");
-                    
-                    totalSpendingLabel.setText(formatCurrency(total != null ? total : BigDecimal.ZERO));
-                    mostSpendingLabel.setText(formatCurrency(maxAmount != null ? maxAmount : BigDecimal.ZERO));
-                }
-            }
-        } catch (SQLException e) {
-            showAlert("Database Error", "Failed to calculate totals: " + e.getMessage());
-        }
-    }
-    
-    private String buildTotalQuery() {
-        String baseQuery = "SELECT SUM(amount) as total, MAX(amount) as max_amount FROM spending";
-        String whereClause = "";
-        
-        if (selectedMonth != null && !selectedMonth.equals("All Months")) {
-            int monthNum = monthFilterComboBox.getSelectionModel().getSelectedIndex(); 
-            whereClause = " WHERE EXTRACT(MONTH FROM date) = " + monthNum;
-        }
-
-        if (selectedYear != null && !selectedYear.isEmpty()) {
-            if (whereClause.isEmpty()) {
-                whereClause = " WHERE EXTRACT(YEAR FROM date) = " + selectedYear;
-            } else {
-                whereClause += " AND EXTRACT(YEAR FROM date) = " + selectedYear;
+            total = total.add(amount);
+            if (amount.compareTo(maxAmount) > 0) {
+                maxAmount = amount;
             }
         }
         
-        // Time-based filter
-        switch (currentFilter) {
-            case "1WEEK":
-            case "1MONTH":
-            case "1YEAR":
-                if (whereClause.isEmpty()) {
-                    whereClause = " WHERE date >= ?";
-                } else {
-                    whereClause += " AND date >= ?";
-                }
-                break;
-        }
-        
-        return baseQuery + whereClause;
+        totalSpendingLabel.setText(formatCurrency(total));
+        mostSpendingLabel.setText(formatCurrency(maxAmount));
     }
     
     @FXML
     private void filterAll() {
         currentFilter = "ALL";
         updateFilterButtonStyles();
-        loadSpendingData();
-        updateTotals();
+        applyFilters();
     }
     
     @FXML
     private void filter1Week() {
         currentFilter = "1WEEK";
         updateFilterButtonStyles();
-        loadSpendingData();
-        updateTotals();
+        applyFilters();
     }
     
     @FXML
     private void filter1Month() {
         currentFilter = "1MONTH";
         updateFilterButtonStyles();
-        loadSpendingData();
-        updateTotals();
+        applyFilters();
     }
     
     @FXML
     private void filter1Year() {
         currentFilter = "1YEAR";
         updateFilterButtonStyles();
-        loadSpendingData();
-        updateTotals();
+        applyFilters();
     }
 
     @FXML
@@ -325,21 +292,18 @@ public class SpendController implements Initializable {
         selectedYear = null;
         currentFilter = "ALL";
         updateFilterButtonStyles();
-        loadSpendingData();
-        updateTotals();
+        applyFilters();
     }
     
     private void updateFilterButtonStyles() {
         String activeStyle = "-fx-background-color: #1F6E8C; -fx-text-fill: white; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 5 15;";
         String inactiveStyle = "-fx-background-color: transparent; -fx-border-color: #1F6E8C; -fx-border-width: 1; -fx-border-radius: 15; -fx-text-fill: #1F6E8C; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 5 15;";
         
-        // Reset all buttons to inactive style
         filterAllBtn.setStyle(inactiveStyle);
         filter1WeekBtn.setStyle(inactiveStyle);
         filter1MonthBtn.setStyle(inactiveStyle);
         filter1YearBtn.setStyle(inactiveStyle);
         
-        // Set active button style
         switch (currentFilter) {
             case "ALL":
                 filterAllBtn.setStyle(activeStyle);
@@ -374,7 +338,7 @@ public class SpendController implements Initializable {
             String sql = "INSERT INTO spending (category, description, amount, date) VALUES (?, ?, ?, ?)";
             
             try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                 PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 
                 stmt.setString(1, category.name());
                 stmt.setString(2, description);
@@ -383,9 +347,18 @@ public class SpendController implements Initializable {
                 
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected > 0) {
+                    int generatedId = -1;
+                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            generatedId = generatedKeys.getInt(1);
+                        }
+                    }
+                    
+                    SpendingData newData = new SpendingData(generatedId, category.name(), description, amount, date);
+                    allSpendingData.add(0, newData); 
+                    
                     clearFields();
-                    loadSpendingData();
-                    updateTotals();
+                    applyFilters();
                     showAlert("Success", "Spending added successfully!");
                 }
             }
@@ -429,11 +402,20 @@ public class SpendController implements Initializable {
                 
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected > 0) {
+                    for (SpendingData data : allSpendingData) {
+                        if (data.getId() == selectedId) {
+                            data.setCategory(category.name());
+                            data.setDescription(description);
+                            data.setAmount(amount);
+                            data.setDate(date);
+                            break;
+                        }
+                    }
+                    
                     clearFields();
                     selectedId = -1;
                     spendingTable.getSelectionModel().clearSelection();
-                    loadSpendingData();
-                    updateTotals();
+                    applyFilters();
                     showAlert("Success", "Spending updated successfully!");
                 }
             }
@@ -466,11 +448,13 @@ public class SpendController implements Initializable {
                 
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected > 0) {
+                    // Remove from memory list
+                    allSpendingData.removeIf(data -> data.getId() == selectedId);
+                    
                     clearFields();
                     selectedId = -1;
                     spendingTable.getSelectionModel().clearSelection();
-                    loadSpendingData();
-                    updateTotals();
+                    applyFilters();
                     showAlert("Success", "Spending deleted successfully!");
                 }
             } catch (SQLException e) {
@@ -548,7 +532,8 @@ public class SpendController implements Initializable {
         amountField.setText(amountText);
         
         // Parse date
-        LocalDate date = LocalDate.parse(display.getDate());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        LocalDate date = LocalDate.parse(display.getDate(), formatter);
         datePicker.setValue(date);
     }
     
@@ -556,7 +541,7 @@ public class SpendController implements Initializable {
         categoryComboBox.setValue(null);
         descriptionField.clear();
         amountField.clear();
-        datePicker.setValue(null);
+        datePicker.setValue(LocalDate.now());
     }
     
     private String formatCurrency(BigDecimal amount) {
@@ -570,6 +555,37 @@ public class SpendController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+    
+    // Raw data class for storing spending data in memory
+    public static class SpendingData {
+        private int id;
+        private String category;
+        private String description;
+        private BigDecimal amount;
+        private LocalDate date;
+        
+        public SpendingData(int id, String category, String description, BigDecimal amount, LocalDate date) {
+            this.id = id;
+            this.category = category;
+            this.description = description;
+            this.amount = amount;
+            this.date = date;
+        }
+        
+        // Getters
+        public int getId() { return id; }
+        public String getCategory() { return category; }
+        public String getDescription() { return description; }
+        public BigDecimal getAmount() { return amount; }
+        public LocalDate getDate() { return date; }
+        
+        // Setters
+        public void setId(int id) { this.id = id; }
+        public void setCategory(String category) { this.category = category; }
+        public void setDescription(String description) { this.description = description; }
+        public void setAmount(BigDecimal amount) { this.amount = amount; }
+        public void setDate(LocalDate date) { this.date = date; }
     }
     
     // Display class for TableView
