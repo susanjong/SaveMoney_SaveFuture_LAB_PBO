@@ -15,6 +15,7 @@ import java.util.ResourceBundle;
 
 import com.finance.finance_lab_pbo.model.Income;
 import com.finance.finance_lab_pbo.model.Spending;
+import com.finance.finance_lab_pbo.model.Transaction;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -55,37 +56,30 @@ public class DashboardController implements Initializable {
     @FXML private TableColumn<TransactionDisplay, String> amountColumn;
     @FXML private TableColumn<TransactionDisplay, String> dateColumn;
     @FXML private TableColumn<TransactionDisplay, String> balanceColumn;
+    @FXML private TableColumn<TransactionDisplay, String> typeColumn; 
 
     private ObservableList<TransactionDisplay> transactionData;
     private DecimalFormat currencyFormat;
     
-    // Data source - from database
-    private List<Income> incomeList;
-    private List<Spending> spendingList;
+    private List<Transaction> allTransactions;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         currencyFormat = new DecimalFormat("#,###");
-        
-        // Initialize ComboBoxes
+
         initializeComboBoxes();
         
-        // Initialize table
         initializeTable();
         
-        // Set default year
         yearTextField.setText(String.valueOf(LocalDate.now().getYear()));
         
-        // Load data from database and apply filters
         loadDataFromDatabase();
         applyFilters();
     }
 
     private void loadDataFromDatabase() {
-        incomeList = new ArrayList<>();
-        spendingList = new ArrayList<>();
+        allTransactions = new ArrayList<>();
         
-        // Load Income data
         String incomeQuery = "SELECT * FROM income ORDER BY date DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(incomeQuery);
@@ -99,7 +93,7 @@ public class DashboardController implements Initializable {
                     rs.getString("description")
                 );
                 income.setId(rs.getInt("id"));
-                incomeList.add(income);
+                allTransactions.add(income);
             }
             
         } catch (SQLException e) {
@@ -107,7 +101,6 @@ public class DashboardController implements Initializable {
             showAlert("Database Error", "Failed to load income data: " + e.getMessage());
         }
         
-        // Load Spending data
         String spendingQuery = "SELECT * FROM spending ORDER BY date DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(spendingQuery);
@@ -121,7 +114,7 @@ public class DashboardController implements Initializable {
                     rs.getString("description")
                 );
                 spending.setId(rs.getInt("id"));
-                spendingList.add(spending);
+                allTransactions.add(spending);
             }
             
         } catch (SQLException e) {
@@ -134,13 +127,12 @@ public class DashboardController implements Initializable {
         sortComboBox.setItems(FXCollections.observableArrayList("Ascending", "Descending"));
         sortComboBox.setValue("Ascending");
         
-        // Month combo box
         periodComboBox.setItems(FXCollections.observableArrayList(
             "All Months", "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         ));
-        periodComboBox.setValue("All");
-        
+        periodComboBox.setValue("All Months");
+
         filterComboBox.setItems(FXCollections.observableArrayList("Show All", "Income Only", "Spending Only"));
         filterComboBox.setValue("Show All");
     }
@@ -151,6 +143,7 @@ public class DashboardController implements Initializable {
         amountColumn.setCellValueFactory(new PropertyValueFactory<>("formattedAmount"));
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
         balanceColumn.setCellValueFactory(new PropertyValueFactory<>("formattedBalance"));
+        typeColumn.setCellValueFactory(new PropertyValueFactory<>("type")); // New type column
         
         transactionData = FXCollections.observableArrayList();
         transactionTable.setItems(transactionData);
@@ -180,43 +173,40 @@ public class DashboardController implements Initializable {
         try {
             filterYear = Integer.parseInt(yearText);
         } catch (NumberFormatException e) {
-            filterYear = LocalDate.now().getYear(); // Default to current year
+            filterYear = LocalDate.now().getYear(); 
         }
 
-        // Filter and combine data
         List<TransactionDisplay> filteredTransactions = new ArrayList<>();
         
-        // Filter income
-        if (!"Spending Only".equals(selectedFilter)) {
-            for (Income income : incomeList) {
-                if (matchesFilter(income.getDate(), selectedMonth, filterYear)) {
-                    filteredTransactions.add(new TransactionDisplay(
-                        filteredTransactions.size() + 1,
-                        income.getSource() + " - " + income.getDescription(),
-                        income.getAmount().doubleValue(),
-                        income.getDate().toString(),
-                        0 // Balance will be calculated
-                    ));
-                }
+        for (Transaction transaction : allTransactions) {
+            boolean includeTransaction = false;
+            
+            switch (selectedFilter) {
+                case "Show All":
+                    includeTransaction = true;
+                    break;
+                case "Income Only":
+                    includeTransaction = "INCOME".equals(transaction.getType());
+                    break;
+                case "Spending Only":
+                    includeTransaction = "SPENDING".equals(transaction.getType());
+                    break;
+            }
+            
+            if (includeTransaction && matchesFilter(transaction.getDate(), selectedMonth, filterYear)) {
+                String activityDescription = getActivityDescription(transaction);
+                double amount = getTransactionAmount(transaction);
+                
+                filteredTransactions.add(new TransactionDisplay(
+                    filteredTransactions.size() + 1,
+                    activityDescription,
+                    amount,
+                    transaction.getDate().toString(),
+                    0, 
+                    transaction.getType() 
+                ));
             }
         }
-        
-        // Filter spending
-        if (!"Income Only".equals(selectedFilter)) {
-            for (Spending spending : spendingList) {
-                if (matchesFilter(spending.getDate(), selectedMonth, filterYear)) {
-                    filteredTransactions.add(new TransactionDisplay(
-                        filteredTransactions.size() + 1,
-                        spending.getCategory() + " - " + spending.getDescription(),
-                        -spending.getAmount().doubleValue(), // Negative for spending
-                        spending.getDate().toString(),
-                        0 // Balance will be calculated
-                    ));
-                }
-            }
-        }
-        
-        // Sort by date and calculate running balance
         filteredTransactions.sort((t1, t2) -> t1.getDate().compareTo(t2.getDate()));
         
         double runningBalance = 0;
@@ -224,20 +214,32 @@ public class DashboardController implements Initializable {
             TransactionDisplay t = filteredTransactions.get(i);
             runningBalance += t.getAmount();
             t.setBalance(runningBalance);
-            t.setId(i + 1); // Renumber
+            t.setId(i + 1);
         }
-        
-        // Apply sort order
+
         if ("Descending".equals(sortComboBox.getValue())) {
             filteredTransactions.sort((t1, t2) -> Integer.compare(t2.getId(), t1.getId()));
         }
         
-        // Update table
         transactionData.clear();
         transactionData.addAll(filteredTransactions);
         
-        // Update summary cards
         updateSummaryCards(selectedMonth, filterYear);
+    }
+
+    private String getActivityDescription(Transaction transaction) {
+        if ("INCOME".equals(transaction.getType())) {
+            Income income = (Income) transaction;
+            return income.getSource() + " - " + income.getDescription();
+        } else {
+            Spending spending = (Spending) transaction;
+            return spending.getCategory() + " - " + spending.getDescription();
+        }
+    }
+
+    private double getTransactionAmount(Transaction transaction) {
+        double amount = transaction.getAmount().doubleValue();
+        return "SPENDING".equals(transaction.getType()) ? -amount : amount;
     }
 
     private boolean matchesFilter(LocalDate date, String selectedMonth, int filterYear) {
@@ -245,7 +247,7 @@ public class DashboardController implements Initializable {
             return false;
         }
         
-        if ("All".equals(selectedMonth)) {
+        if ("All Months".equals(selectedMonth)) {
             return true;
         }
         
@@ -257,17 +259,15 @@ public class DashboardController implements Initializable {
         double totalIncome = 0;
         double totalSpending = 0;
         
-        // Calculate income
-        for (Income income : incomeList) {
-            if (matchesFilter(income.getDate(), selectedMonth, filterYear)) {
-                totalIncome += income.getAmount().doubleValue();
-            }
-        }
-        
-        // Calculate spending
-        for (Spending spending : spendingList) {
-            if (matchesFilter(spending.getDate(), selectedMonth, filterYear)) {
-                totalSpending += spending.getAmount().doubleValue();
+        for (Transaction transaction : allTransactions) {
+            if (matchesFilter(transaction.getDate(), selectedMonth, filterYear)) {
+                double amount = transaction.getAmount().doubleValue();
+                
+                if ("INCOME".equals(transaction.getType())) {
+                    totalIncome += amount;
+                } else if ("SPENDING".equals(transaction.getType())) {
+                    totalSpending += amount;
+                }
             }
         }
         
@@ -346,8 +346,11 @@ public class DashboardController implements Initializable {
         StringBuilder details = new StringBuilder();
         double total = 0;
         
-        for (Income income : incomeList) {
-            if (matchesFilter(income.getDate(), selectedMonth, filterYear)) {
+        for (Transaction transaction : allTransactions) {
+            if ("INCOME".equals(transaction.getType()) && 
+                matchesFilter(transaction.getDate(), selectedMonth, filterYear)) {
+                
+                Income income = (Income) transaction;
                 details.append(income.getSource()).append(": Rp ")
                        .append(currencyFormat.format(income.getAmount())).append("\n");
                 total += income.getAmount().doubleValue();
@@ -375,9 +378,12 @@ public class DashboardController implements Initializable {
 
         StringBuilder details = new StringBuilder();
         double total = 0;
-        
-        for (Spending spending : spendingList) {
-            if (matchesFilter(spending.getDate(), selectedMonth, filterYear)) {
+
+        for (Transaction transaction : allTransactions) {
+            if ("SPENDING".equals(transaction.getType()) && 
+                matchesFilter(transaction.getDate(), selectedMonth, filterYear)) {
+                
+                Spending spending = (Spending) transaction;
                 details.append(spending.getCategory()).append(": Rp ")
                        .append(currencyFormat.format(spending.getAmount())).append("\n");
                 total += spending.getAmount().doubleValue();
@@ -393,7 +399,7 @@ public class DashboardController implements Initializable {
 
     @FXML
     private void onSortChange() {
-        applyFilters(); // Reapply filters with new sort order
+        applyFilters(); 
     }
 
     private void showAlert(String title, String message) {
@@ -404,23 +410,23 @@ public class DashboardController implements Initializable {
         alert.showAndWait();
     }
 
-    // TransactionDisplay class for table
     public static class TransactionDisplay {
         private int id;
         private String activity;
         private double amount;
         private String date;
         private double balance;
+        private String type; 
 
-        public TransactionDisplay(int id, String activity, double amount, String date, double balance) {
+        public TransactionDisplay(int id, String activity, double amount, String date, double balance, String type) {
             this.id = id;
             this.activity = activity;
             this.amount = amount;
             this.date = date;
             this.balance = balance;
+            this.type = type;
         }
 
-        // Getters and setters
         public int getId() { return id; }
         public void setId(int id) { this.id = id; }
         public String getActivity() { return activity; }
@@ -428,6 +434,8 @@ public class DashboardController implements Initializable {
         public String getDate() { return date; }
         public double getBalance() { return balance; }
         public void setBalance(double balance) { this.balance = balance; }
+        public String getType() { return type; } 
+        public void setType(String type) { this.type = type; } 
 
         public String getFormattedAmount() {
             DecimalFormat df = new DecimalFormat("#,###");

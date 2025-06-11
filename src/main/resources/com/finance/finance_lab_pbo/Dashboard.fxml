@@ -155,11 +155,13 @@
                                     style="-fx-alignment: CENTER; -fx-text-fill: #2C3E50;" />
                         <TableColumn fx:id="activityColumn" prefWidth="200.0" text="Activity" 
                                     style="-fx-alignment: CENTER_LEFT; -fx-text-fill: #2C3E50;" />
-                        <TableColumn fx:id="amountColumn" prefWidth="180.0" text="Income / Spending" 
+                        <TableColumn fx:id="amountColumn" prefWidth="180.0" text="Amount (IDR)" 
                                     style="-fx-alignment: CENTER; -fx-text-fill: #2C3E50;" />
                         <TableColumn fx:id="dateColumn" prefWidth="120.0" text="Date" 
                                     style="-fx-alignment: CENTER; -fx-text-fill: #2C3E50;" />
                         <TableColumn fx:id="balanceColumn" prefWidth="150.0" text="Balance" 
+                                    style="-fx-alignment: CENTER; -fx-text-fill: #2C3E50;" />
+                        <TableColumn fx:id="typeColumn" prefWidth="80.0" text="Type"
                                     style="-fx-alignment: CENTER; -fx-text-fill: #2C3E50;" />
                      </columns>
                      <columnResizePolicy>
