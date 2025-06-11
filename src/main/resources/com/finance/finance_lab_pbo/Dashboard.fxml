@@ -47,14 +47,12 @@
    <center>
       <VBox style="-fx-background-color: linear-gradient(to bottom, #52C4D8 0%, #7DD3DF 25%, #A8E6ED 50%, #D4F4F8 75%, #FFFFFF 100%);">
          <children>
-            <HBox alignment="CENTER" prefHeight="100.0" style="-fx-padding: 20 0 10 0;">
-               <children>
-                  <Label style="-fx-text-fill: white; -fx-font-size: 32px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);" text="Track your personal finance!">
-                     <font>
-                        <Font name="System Bold" size="32.0" />
-                     </font>
-                  </Label>
-               </children>
+            <HBox alignment="CENTER" style="-fx-background-color: #1F6E8C;">
+               <Label text="Track your Personal Finance!" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;">
+                  <HBox.margin>
+                     <Insets top="8.0" bottom="8.0" />
+                  </HBox.margin>
+               </Label>
             </HBox>
             <HBox alignment="CENTER" spacing="40.0">
                <padding>
@@ -64,12 +62,12 @@
                   <VBox alignment="CENTER" prefWidth="270.0" prefHeight="140.0" 
                         style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);">
                      <children>
-                        <Label style="-fx-font-size: 16px; -fx-text-fill: #7F8C8D; -fx-font-weight: normal;" text="Balance">
+                        <Label style="-fx-font-size: 16px; -fx-text-fill: #000000; -fx-font-weight: normal;" text="Balance">
                            <font>
                               <Font size="16.0" />
                            </font>
                         </Label>
-                        <Label fx:id="balanceLabel" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2C3E50; -fx-padding: 8 0 0 0;" text="Rp 5.000.000">
+                        <Label fx:id="balanceLabel" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-padding: 8 0 0 0;" text="Rp 5.000.000">
                            <font>
                               <Font name="System Bold" size="28.0" />
                            </font>
@@ -79,18 +77,18 @@
                   <VBox alignment="CENTER" prefWidth="270.0" prefHeight="140.0" 
                         style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);">
                      <children>
-                        <Label style="-fx-font-size: 16px; -fx-text-fill: #7F8C8D; -fx-font-weight: normal;" text="Income">
+                        <Label style="-fx-font-size: 16px; -fx-text-fill: #16610E; -fx-font-weight: normal;" text="Income">
                            <font>
                               <Font size="16.0" />
                            </font>
                         </Label>
-                        <Label fx:id="incomeLabel" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #27AE60; -fx-padding: 8 0 0 0;" text="Rp 15.000.000">
+                        <Label fx:id="incomeLabel" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #16610E; -fx-padding: 8 0 0 0;" text="Rp 15.000.000">
                            <font>
                               <Font name="System Bold" size="28.0" />
                            </font>
                         </Label>
                         <Button fx:id="incomeDetailsBtn" mnemonicParsing="false" onAction="#showIncomeDetails" 
-                                style="-fx-background-color: transparent; -fx-text-fill: #95A5A6; -fx-underline: true; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 0 0 0;" 
+                                style="-fx-background-color: transparent; -fx-text-fill: #2A4759; -fx-underline: false; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 0 0 0;" 
                                 text="Show Details">
                            <font>
                               <Font size="12.0" />
@@ -101,18 +99,18 @@
                   <VBox alignment="CENTER" prefWidth="270.0" prefHeight="140.0" 
                         style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);">
                      <children>
-                        <Label style="-fx-font-size: 16px; -fx-text-fill: #7F8C8D; -fx-font-weight: normal;" text="Spend">
+                        <Label style="-fx-font-size: 16px; -fx-text-fill: #E55050; -fx-font-weight: normal;" text="Spend">
                            <font>
                               <Font size="16.0" />
                            </font>
                         </Label>
-                        <Label fx:id="spendLabel" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #E74C3C; -fx-padding: 8 0 0 0;" text="Rp 10.000.000">
+                        <Label fx:id="spendLabel" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #E55050; -fx-padding: 8 0 0 0;" text="Rp 10.000.000">
                            <font>
                               <Font name="System Bold" size="28.0" />
                            </font>
                         </Label>
                         <Button fx:id="spendDetailsBtn" mnemonicParsing="false" onAction="#showSpendDetails" 
-                                style="-fx-background-color: transparent; -fx-text-fill: #95A5A6; -fx-underline: true; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 0 0 0;" 
+                                style="-fx-background-color: transparent; -fx-text-fill: #2A4759; -fx-underline: false; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 5 0 0 0;" 
                                 text="Show Details">
                            <font>
                               <Font size="12.0" />
