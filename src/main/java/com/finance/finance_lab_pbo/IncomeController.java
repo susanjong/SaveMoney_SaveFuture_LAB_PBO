@@ -1,5 +1,19 @@
 package com.finance.finance_lab_pbo;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ResourceBundle;
+
+import com.finance.finance_lab_pbo.model.Income;
+
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -10,17 +24,16 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-
-import java.io.IOException;
-import java.net.URL;
-import java.text.NumberFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 public class IncomeController implements Initializable {
 
@@ -33,67 +46,250 @@ public class IncomeController implements Initializable {
     // Table and columns
     @FXML private TableView<IncomeEntry> incomeTable;
     @FXML private TableColumn<IncomeEntry, Integer> noColumn;
-    @FXML private TableColumn<IncomeEntry, String> activityColumn;
-    @FXML private TableColumn<IncomeEntry, String> incomeColumn;
+    @FXML private TableColumn<IncomeEntry, String> sourceColumn;
+    @FXML private TableColumn<IncomeEntry, String> amountColumn;
     @FXML private TableColumn<IncomeEntry, String> dateColumn;
+    @FXML private TableColumn<IncomeEntry, String> descriptionColumn;
 
     // Input fields
-    @FXML private TextField activityField;
-    @FXML private TextField incomeField;
+    @FXML private TextField sourceField;
+    @FXML private TextField amountField;
     @FXML private DatePicker datePicker;
+    @FXML private TextField descriptionField;
 
     // Labels
     @FXML private Label totalIncomeLabel;
     @FXML private Label mostIncomeLabel;
 
-    // Action buttons
-    @FXML private Button addActivityBtn;
-    @FXML private Button deleteBtn;
-    @FXML private Button updateBtn;
+    //Filters
+    @FXML private Button filterAllBtn;
+    @FXML private Button filter1WeekBtn;
+    @FXML private Button filter1MonthBtn;
+    @FXML private Button filter1YearBtn;
+    @FXML 
+    private TextField yearFilterField;
+    private String selectedYear = null;
+    @FXML
+    private ComboBox<String> monthFilterComboBox;
+    private String selectedMonth = null;
 
     // Data
     private ObservableList<IncomeEntry> incomeData = FXCollections.observableArrayList();
-    private NumberFormat currencyFormat;
-
+    private int selectedId = -1;
+    private String currentFilter = "ALL";
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Initialize currency formatter for Indonesian Rupiah
-        currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
-        
-        // Set up table columns
         setupTableColumns();
+
+        ObservableList<String> months = FXCollections.observableArrayList(
+            "All Months", "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        );
+        monthFilterComboBox.setItems(months);
+
+        monthFilterComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            selectedMonth = newVal;
+            loadIncomeFromDatabase();
+            updateSummaryLabels();
+        });
+
+        yearFilterField.textProperty().addListener((obs, oldVal, newVal) -> {
+            selectedYear = newVal.trim().isEmpty() ? null : newVal.trim();
+            loadIncomeFromDatabase();
+            updateSummaryLabels();
+        });
         
-        // Load sample data
-        loadSampleData();
-        
-        // Set table data
+        loadIncomeFromDatabase();
         incomeTable.setItems(incomeData);
-        
-        // Update summary labels
         updateSummaryLabels();
-        
-        // Set default date to today
         datePicker.setValue(LocalDate.now());
+        
+        incomeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                populateFields(newSelection);
+            }
+        });
     }
 
     private void setupTableColumns() {
-        noColumn.setCellValueFactory(new PropertyValueFactory<>("number"));
-        activityColumn.setCellValueFactory(new PropertyValueFactory<>("activity"));
-        incomeColumn.setCellValueFactory(new PropertyValueFactory<>("income"));
+        noColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        sourceColumn.setCellValueFactory(new PropertyValueFactory<>("source"));
+        amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
         dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
+        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
         
         // Make table columns non-resizable for consistent appearance
         noColumn.setResizable(false);
-        activityColumn.setResizable(false);
-        incomeColumn.setResizable(false);
+        sourceColumn.setResizable(false);
+        amountColumn.setResizable(false);
         dateColumn.setResizable(false);
+        descriptionColumn.setResizable(false);
     }
 
-    private void loadSampleData() {
-        incomeData.add(new IncomeEntry(1, "Salary earning", "Rp. 10.000.000", "30-05-2025"));
-        incomeData.add(new IncomeEntry(2, "Bonus earning", "Rp. 10.000.000", "30-05-2025"));
-        incomeData.add(new IncomeEntry(3, "Salary earning", "Rp. 10.000.000", "30-05-2025"));
-        incomeData.add(new IncomeEntry(4, "Bonus earning", "Rp. 10.000.000", "30-05-2025"));
+    private void loadIncomeFromDatabase() {
+        incomeData.clear();
+        String sql = buildFilterQuery();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            setFilterParameters(stmt);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String source = rs.getString("source");
+                    BigDecimal amount = rs.getBigDecimal("amount");
+                    Date date = rs.getDate("date");
+                    String description = rs.getString("description");
+                    
+                    String formattedAmount = formatCurrency(amount.doubleValue());
+                    String formattedDate = date.toLocalDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                    
+                    incomeData.add(new IncomeEntry(id, source, formattedAmount, formattedDate, description));
+                }
+            }
+            
+        } catch (SQLException e) {
+            showAlert("Database Error", "Error loading income data: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private String buildFilterQuery() {
+        String baseQuery = "SELECT * FROM income";
+        String whereClause = "";
+        
+        // Month filter
+        if (selectedMonth != null && !selectedMonth.equals("All Months")) {
+            int monthNum = monthFilterComboBox.getSelectionModel().getSelectedIndex();
+            whereClause = " WHERE EXTRACT(MONTH FROM date) = " + monthNum;
+        }
+        
+        // Year filter
+        if (selectedYear != null && !selectedYear.isEmpty()) {
+            if (whereClause.isEmpty()) {
+                whereClause = " WHERE EXTRACT(YEAR FROM date) = " + selectedYear;
+            } else {
+                whereClause += " AND EXTRACT(YEAR FROM date) = " + selectedYear;
+            }
+        }
+        
+        // Time-based filter
+        switch (currentFilter) {
+            case "1WEEK":
+            case "1MONTH":
+            case "1YEAR":
+                if (whereClause.isEmpty()) {
+                    whereClause = " WHERE date >= ?";
+                } else {
+                    whereClause += " AND date >= ?";
+                }
+                break;
+        }
+        
+        return baseQuery + whereClause + " ORDER BY id";
+    }
+
+    private void setFilterParameters(PreparedStatement stmt) throws SQLException {
+        LocalDate now = LocalDate.now();
+        int paramIndex = 1;
+        
+        switch (currentFilter) {
+            case "1WEEK":
+                stmt.setDate(paramIndex, java.sql.Date.valueOf(now.minusWeeks(1)));
+                break;
+            case "1MONTH":
+                stmt.setDate(paramIndex, java.sql.Date.valueOf(now.minusMonths(1)));
+                break;
+            case "1YEAR":
+                stmt.setDate(paramIndex, java.sql.Date.valueOf(now.minusYears(1)));
+                break;
+        }
+    }
+
+    @FXML
+    private void filterAll() {
+        currentFilter = "ALL";
+        updateFilterButtonStyles();
+        loadIncomeFromDatabase();
+        updateSummaryLabels();
+    }
+    
+    @FXML
+    private void filter1Week() {
+        currentFilter = "1WEEK";
+        updateFilterButtonStyles();
+        loadIncomeFromDatabase();
+        updateSummaryLabels();
+    }
+    
+    @FXML
+    private void filter1Month() {
+        currentFilter = "1MONTH";
+        updateFilterButtonStyles();
+        loadIncomeFromDatabase();
+        updateSummaryLabels();
+    }
+    
+    @FXML
+    private void filter1Year() {
+        currentFilter = "1YEAR";
+        updateFilterButtonStyles();
+        loadIncomeFromDatabase();
+        updateSummaryLabels();
+    }
+
+    @FXML
+    private void resetFilters() {
+        monthFilterComboBox.setValue("All Months");
+        selectedMonth = "All Months";
+        yearFilterField.clear();
+        selectedYear = null;
+        currentFilter = "ALL";
+        updateFilterButtonStyles();
+        loadIncomeFromDatabase();
+        updateSummaryLabels();
+    }
+    
+    private void updateFilterButtonStyles() {
+        String activeStyle = "-fx-background-color: #1F6E8C; -fx-text-fill: white; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 5 15;";
+        String inactiveStyle = "-fx-background-color: transparent; -fx-border-color: #1F6E8C; -fx-border-width: 1; -fx-border-radius: 15; -fx-text-fill: #1F6E8C; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 5 15;";
+        
+        // Reset all buttons to inactive style
+        filterAllBtn.setStyle(inactiveStyle);
+        filter1WeekBtn.setStyle(inactiveStyle);
+        filter1MonthBtn.setStyle(inactiveStyle);
+        filter1YearBtn.setStyle(inactiveStyle);
+        
+        // Set active button style
+        switch (currentFilter) {
+            case "ALL":
+                filterAllBtn.setStyle(activeStyle);
+                break;
+            case "1WEEK":
+                filter1WeekBtn.setStyle(activeStyle);
+                break;
+            case "1MONTH":
+                filter1MonthBtn.setStyle(activeStyle);
+                break;
+            case "1YEAR":
+                filter1YearBtn.setStyle(activeStyle);
+                break;
+        }
+    }
+
+    private void populateFields(IncomeEntry entry) {
+        sourceField.setText(entry.getSource());
+        // Parse amount from formatted string
+        String amountStr = entry.getAmount().replace("Rp ", "").replace(".", "");
+        amountField.setText(amountStr);
+        // Parse date
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        LocalDate date = LocalDate.parse(entry.getDate(), formatter);
+        datePicker.setValue(date);
+        descriptionField.setText(entry.getDescription());
     }
 
     private void updateSummaryLabels() {
@@ -101,7 +297,7 @@ public class IncomeController implements Initializable {
         double highest = 0.0;
 
         for (IncomeEntry entry : incomeData) {
-            double amount = parseIncomeAmount(entry.getIncome());
+            double amount = parseAmount(entry.getAmount());
             total += amount;
             if (amount > highest) {
                 highest = amount;
@@ -112,9 +308,8 @@ public class IncomeController implements Initializable {
         mostIncomeLabel.setText(formatCurrency(highest));
     }
 
-    private double parseIncomeAmount(String incomeStr) {
-        // Remove "Rp. " and dots, then parse
-        return Double.parseDouble(incomeStr.replace("Rp. ", "").replace(".", ""));
+    private double parseAmount(String amountStr) {
+        return Double.parseDouble(amountStr.replace("Rp ", "").replace(".", ""));
     }
 
     private String formatCurrency(double amount) {
@@ -122,102 +317,165 @@ public class IncomeController implements Initializable {
     }
 
     @FXML
-    private void addActivity() {
-        String activity = activityField.getText().trim();
-        String incomeStr = incomeField.getText().trim();
+    private void addIncome() {
+        String source = sourceField.getText().trim();
+        String amountStr = amountField.getText().trim();
         LocalDate date = datePicker.getValue();
+        String description = descriptionField.getText().trim();
 
-        if (activity.isEmpty() || incomeStr.isEmpty() || date == null) {
+        if (source.isEmpty() || amountStr.isEmpty() || date == null || description.isEmpty()) {
             showAlert("Error", "Please fill in all fields.");
             return;
         }
 
         try {
-            double incomeAmount = Double.parseDouble(incomeStr);
-            String formattedIncome = "Rp. " + String.format("%,.0f", incomeAmount).replace(",", ".");
-            String formattedDate = date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-
-            int nextNumber = incomeData.size() + 1;
-            IncomeEntry newEntry = new IncomeEntry(nextNumber, activity, formattedIncome, formattedDate);
-            incomeData.add(newEntry);
-
-            // Clear input fields
-            activityField.clear();
-            incomeField.clear();
-            datePicker.setValue(LocalDate.now());
-
-            // Update summary
-            updateSummaryLabels();
-
-            showAlert("Success", "Income activity added successfully!");
+            BigDecimal amount = new BigDecimal(amountStr);
+            
+            // Create Income object using OOP model
+            Income income = new Income(source, amount, date, description);
+            
+            // Save to database
+            String sql = "INSERT INTO income (source, amount, date, description) VALUES (?, ?, ?, ?)";
+            
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                
+                stmt.setString(1, income.getSource());
+                stmt.setBigDecimal(2, income.getAmount());
+                stmt.setDate(3, Date.valueOf(income.getDate()));
+                stmt.setString(4, income.getDescription());
+                
+                int rowsAffected = stmt.executeUpdate();
+                
+                if (rowsAffected > 0) {
+                    // Clear input fields
+                    clearFields();
+                    
+                    // Reload data from database
+                    loadIncomeFromDatabase();
+                    
+                    // Update summary
+                    updateSummaryLabels();
+                    
+                    showAlert("Success", "Income added successfully!");
+                } else {
+                    showAlert("Error", "Failed to add income.");
+                }
+                
+            } catch (SQLException e) {
+                showAlert("Database Error", "Error adding income: " + e.getMessage());
+                e.printStackTrace();
+            }
 
         } catch (NumberFormatException e) {
-            showAlert("Error", "Please enter a valid income amount.");
+            showAlert("Error", "Please enter a valid amount.");
         }
     }
 
     @FXML
-    private void deleteActivity() {
+    private void deleteIncome() {
         IncomeEntry selectedEntry = incomeTable.getSelectionModel().getSelectedItem();
         
         if (selectedEntry == null) {
-            showAlert("Error", "Please select an activity to delete.");
+            showAlert("Error", "Please select an income to delete.");
             return;
         }
 
-        incomeData.remove(selectedEntry);
+        String sql = "DELETE FROM income WHERE id = ?";
         
-        // Update numbers
-        for (int i = 0; i < incomeData.size(); i++) {
-            incomeData.get(i).setNumber(i + 1);
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, selectedEntry.getId());
+            
+            int rowsAffected = stmt.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                // Reload data from database
+                loadIncomeFromDatabase();
+                updateSummaryLabels();
+                
+                // Clear input fields
+                clearFields();
+                
+                showAlert("Success", "Income deleted successfully!");
+            } else {
+                showAlert("Error", "Failed to delete income.");
+            }
+            
+        } catch (SQLException e) {
+            showAlert("Database Error", "Error deleting income: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        incomeTable.refresh();
-        updateSummaryLabels();
-        
-        showAlert("Success", "Activity deleted successfully!");
     }
 
     @FXML
-    private void updateActivity() {
+    private void updateIncome() {
         IncomeEntry selectedEntry = incomeTable.getSelectionModel().getSelectedItem();
         
         if (selectedEntry == null) {
-            showAlert("Error", "Please select an activity to update.");
+            showAlert("Error", "Please select an income to update.");
             return;
         }
 
-        String activity = activityField.getText().trim();
-        String incomeStr = incomeField.getText().trim();
+        String source = sourceField.getText().trim();
+        String amountStr = amountField.getText().trim();
         LocalDate date = datePicker.getValue();
+        String description = descriptionField.getText().trim();
 
-        if (activity.isEmpty() || incomeStr.isEmpty() || date == null) {
+        if (source.isEmpty() || amountStr.isEmpty() || date == null || description.isEmpty()) {
             showAlert("Error", "Please fill in all fields to update.");
             return;
         }
 
         try {
-            double incomeAmount = Double.parseDouble(incomeStr);
-            String formattedIncome = "Rp. " + String.format("%,.0f", incomeAmount).replace(",", ".");
-            String formattedDate = date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-
-            selectedEntry.setActivity(activity);
-            selectedEntry.setIncome(formattedIncome);
-            selectedEntry.setDate(formattedDate);
-
-            incomeTable.refresh();
-            updateSummaryLabels();
-
-            // Clear input fields
-            activityField.clear();
-            incomeField.clear();
-            datePicker.setValue(LocalDate.now());
-
-            showAlert("Success", "Activity updated successfully!");
+            BigDecimal amount = new BigDecimal(amountStr);
+            
+            // Create Income object using OOP model
+            Income income = new Income(source, amount, date, description);
+            
+            // Update in database
+            String sql = "UPDATE income SET source = ?, amount = ?, date = ?, description = ? WHERE id = ?";
+            
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                
+                stmt.setString(1, income.getSource());
+                stmt.setBigDecimal(2, income.getAmount());
+                stmt.setDate(3, Date.valueOf(income.getDate()));
+                stmt.setString(4, income.getDescription());
+                stmt.setInt(5, selectedEntry.getId());
+                
+                int rowsAffected = stmt.executeUpdate();
+                
+                if (rowsAffected > 0) {
+                    // Clear input fields
+                    clearFields();
+                    
+                    // Reload data from database
+                    loadIncomeFromDatabase();
+                    updateSummaryLabels();
+                    
+                    showAlert("Success", "Income updated successfully!");
+                } else {
+                    showAlert("Error", "Failed to update income.");
+                }
+                
+            } catch (SQLException e) {
+                showAlert("Database Error", "Error updating income: " + e.getMessage());
+                e.printStackTrace();
+            }
 
         } catch (NumberFormatException e) {
-            showAlert("Error", "Please enter a valid income amount.");
+            showAlert("Error", "Please enter a valid amount.");
         }
+    }
+
+    private void clearFields() {
+        sourceField.clear();
+        amountField.clear();
+        datePicker.setValue(LocalDate.now());
+        descriptionField.clear();
     }
 
     // Navigation methods
@@ -284,36 +542,34 @@ public class IncomeController implements Initializable {
         alert.showAndWait();
     }
 
-    // Inner class for Income Entry data model
+    // Inner class for Income Entry data model (for TableView display)
     public static class IncomeEntry {
-        private SimpleIntegerProperty number;
-        private SimpleStringProperty activity;
-        private SimpleStringProperty income;
+        private SimpleIntegerProperty id;
+        private SimpleStringProperty source;
+        private SimpleStringProperty amount;
         private SimpleStringProperty date;
+        private SimpleStringProperty description;
 
-        public IncomeEntry(int number, String activity, String income, String date) {
-            this.number = new SimpleIntegerProperty(number);
-            this.activity = new SimpleStringProperty(activity);
-            this.income = new SimpleStringProperty(income);
+        public IncomeEntry(int id, String source, String amount, String date, String description) {
+            this.id = new SimpleIntegerProperty(id);
+            this.source = new SimpleStringProperty(source);
+            this.amount = new SimpleStringProperty(amount);
             this.date = new SimpleStringProperty(date);
+            this.description = new SimpleStringProperty(description);
         }
 
         // Getters
-        public int getNumber() { return number.get(); }
-        public String getActivity() { return activity.get(); }
-        public String getIncome() { return income.get(); }
+        public int getId() { return id.get(); }
+        public String getSource() { return source.get(); }
+        public String getAmount() { return amount.get(); }
         public String getDate() { return date.get(); }
+        public String getDescription() { return description.get(); }
 
         // Setters
-        public void setNumber(int number) { this.number.set(number); }
-        public void setActivity(String activity) { this.activity.set(activity); }
-        public void setIncome(String income) { this.income.set(income); }
+        public void setId(int id) { this.id.set(id); }
+        public void setSource(String source) { this.source.set(source); }
+        public void setAmount(String amount) { this.amount.set(amount); }
         public void setDate(String date) { this.date.set(date); }
-
-        // Property methods for TableView
-        public SimpleIntegerProperty numberProperty() { return number; }
-        public SimpleStringProperty activityProperty() { return activity; }
-        public SimpleStringProperty incomeProperty() { return income; }
-        public SimpleStringProperty dateProperty() { return date; }
+        public void setDescription(String description) { this.description.set(description); }
     }
 }

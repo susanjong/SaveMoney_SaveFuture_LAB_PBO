@@ -56,14 +56,38 @@
             </HBox>
             <HBox spacing="20.0" VBox.vgrow="ALWAYS">
                <children>
-                  <VBox prefWidth="500.0" HBox.hgrow="ALWAYS">
+                  <VBox prefWidth="600.0" HBox.hgrow="ALWAYS">
                      <children>
+                        <HBox spacing="15.0" style="-fx-padding: 10 0 10 0;" alignment="CENTER_LEFT">
+                           <children>
+                              <Label text="Filter by:" style="-fx-font-weight: bold; -fx-font-size: 12px;" />
+                              <Button fx:id="filterAllBtn" mnemonicParsing="false" onAction="#filterAll" 
+                                      style="-fx-background-color: #1F6E8C; -fx-text-fill: white; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 5 15;" 
+                                      text="All" />
+                              <Button fx:id="filter1WeekBtn" mnemonicParsing="false" onAction="#filter1Week" 
+                                      style="-fx-background-color: transparent; -fx-border-color: #1F6E8C; -fx-border-width: 1; -fx-border-radius: 15; -fx-text-fill: #1F6E8C; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 5 15;" 
+                                      text="1 Week" />
+                              <Button fx:id="filter1MonthBtn" mnemonicParsing="false" onAction="#filter1Month" 
+                                      style="-fx-background-color: transparent; -fx-border-color: #1F6E8C; -fx-border-width: 1; -fx-border-radius: 15; -fx-text-fill: #1F6E8C; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 5 15;" 
+                                      text="1 Month" />
+                              <Button fx:id="filter1YearBtn" mnemonicParsing="false" onAction="#filter1Year" 
+                                      style="-fx-background-color: transparent; -fx-border-color: #1F6E8C; -fx-border-width: 1; -fx-border-radius: 15; -fx-text-fill: #1F6E8C; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 5 15;" 
+                                      text="1 Year" />
+                              <ComboBox fx:id="monthFilterComboBox" prefWidth="120.0" 
+                                       style="-fx-background-radius: 10; -fx-font-size: 11px;" 
+                                       promptText="Select Month" />
+                              <TextField fx:id="yearFilterField" prefWidth="80.0" 
+                                       style="-fx-background-radius: 10; -fx-font-size: 11px;" 
+                                       promptText="Year" />
+                           </children>
+                        </HBox>
                         <TableView fx:id="incomeTable" prefHeight="350.0">
                            <columns>
-                              <TableColumn fx:id="noColumn" prefWidth="50.0" text="No" />
-                              <TableColumn fx:id="activityColumn" prefWidth="150.0" text="Activity" />
-                              <TableColumn fx:id="incomeColumn" prefWidth="150.0" text="Income" />
-                              <TableColumn fx:id="dateColumn" prefWidth="120.0" text="Date" />
+                              <TableColumn fx:id="noColumn" prefWidth="40.0" text="No" />
+                              <TableColumn fx:id="sourceColumn" prefWidth="120.0" text="Source" />
+                              <TableColumn fx:id="amountColumn" prefWidth="100.0" text="Amount (IDR)" />
+                              <TableColumn fx:id="dateColumn" prefWidth="90.0" text="Date" />
+                              <TableColumn fx:id="descriptionColumn" prefWidth="230.0" text="Description" />
                            </columns>
                         </TableView>
                         <HBox spacing="20.0" style="-fx-padding: 20;">
@@ -79,7 +103,7 @@
                               </VBox>
                               <VBox>
                                  <children>
-                                    <Label fx:id="totalIncomeLabel" style="-fx-background-color: #FFFFFF; -fx-padding: 5 10; -fx-background-radius: 5;" text="Rp 40.000.000">
+                                    <Label fx:id="totalIncomeLabel" style="-fx-background-color: #FFFFFF; -fx-padding: 5 10; -fx-background-radius: 5;" text="Rp 0">
                                        <font>
                                           <Font name="System Bold" size="14.0" />
                                        </font>
@@ -88,7 +112,7 @@
                               </VBox>
                               <VBox>
                                  <children>
-                                    <Label text="Most Income :" textFill="BLACK">
+                                    <Label text="Highest Income :" textFill="BLACK">
                                        <font>
                                           <Font name="System Bold" size="14.0" />
                                        </font>
@@ -97,7 +121,7 @@
                               </VBox>
                               <VBox>
                                  <children>
-                                    <Label fx:id="mostIncomeLabel" style="-fx-background-color: #FFFFFF; -fx-padding: 5 10; -fx-background-radius: 5;" text="Rp 10.000.000">
+                                    <Label fx:id="mostIncomeLabel" style="-fx-background-color: #FFFFFF; -fx-padding: 5 10; -fx-background-radius: 5;" text="Rp 0">
                                        <font>
                                           <Font name="System Bold" size="14.0" />
                                        </font>
@@ -108,8 +132,8 @@
                         </HBox>
                         <HBox alignment="CENTER_RIGHT" spacing="10.0" style="-fx-padding: 20;">
                            <children>
-                              <Button fx:id="deleteBtn" mnemonicParsing="false" onAction="#deleteActivity" style="-fx-background-color: #E55050; -fx-text-fill: white; -fx-background-radius: 5;" text="Delete Activity" />
-                              <Button fx:id="updateBtn" mnemonicParsing="false" onAction="#updateActivity" style="-fx-background-color: #16610E; -fx-text-fill: white; -fx-background-radius: 5;" text="Update Activity" />
+                              <Button fx:id="deleteBtn" mnemonicParsing="false" onAction="#deleteIncome" style="-fx-background-color: #E55050; -fx-text-fill: white; -fx-background-radius: 5;" text="Delete Income" />
+                              <Button fx:id="updateBtn" mnemonicParsing="false" onAction="#updateIncome" style="-fx-background-color: #16610E; -fx-text-fill: white; -fx-background-radius: 5;" text="Update Income" />
                            </children>
                         </HBox>
                      </children>
@@ -119,7 +143,7 @@
                   </VBox>
                   <VBox prefWidth="300.0" style="-fx-background-color: #B2DEE5;" spacing="10.0" alignment="TOP_CENTER">
                      <children>
-                        <Label text="Activity" textFill="BLACK">
+                        <Label text="Source" textFill="BLACK">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
@@ -127,12 +151,12 @@
                               <Insets bottom="5.0" />
                            </VBox.margin>
                         </Label>
-                        <TextField fx:id="activityField" style="-fx-background-radius: 5;">
+                        <TextField fx:id="sourceField" promptText="e.g. Monthly Allowance, Design Fee" style="-fx-background-radius: 5;">
                            <VBox.margin>
                               <Insets bottom="15.0" />
                            </VBox.margin>
                         </TextField>
-                        <Label text="Income" textFill="BLACK">
+                        <Label text="Amount" textFill="BLACK">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
@@ -140,7 +164,7 @@
                               <Insets bottom="5.0" />
                            </VBox.margin>
                         </Label>
-                        <TextField fx:id="incomeField" style="-fx-background-radius: 5;">
+                        <TextField fx:id="amountField" promptText="Enter amount in numbers only" style="-fx-background-radius: 5;">
                            <VBox.margin>
                               <Insets bottom="15.0" />
                            </VBox.margin>
@@ -155,10 +179,23 @@
                         </Label>
                         <DatePicker fx:id="datePicker" style="-fx-background-radius: 5;">
                            <VBox.margin>
-                              <Insets bottom="20.0" />
+                              <Insets bottom="15.0" />
                            </VBox.margin>
                         </DatePicker>
-                        <Button fx:id="addActivityBtn" mnemonicParsing="false" onAction="#addActivity" prefWidth="200.0" style="-fx-background-color: #16610E; -fx-text-fill: white; -fx-background-radius: 5;" text="Add Activity">
+                        <Label text="Description" textFill="BLACK">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="5.0" />
+                           </VBox.margin>
+                        </Label>
+                        <TextField fx:id="descriptionField" promptText="e.g. Monthly allowance from June" style="-fx-background-radius: 5;">
+                           <VBox.margin>
+                              <Insets bottom="20.0" />
+                           </VBox.margin>
+                        </TextField>
+                        <Button fx:id="addIncomeBtn" mnemonicParsing="false" onAction="#addIncome" prefWidth="200.0" style="-fx-background-color: #16610E; -fx-text-fill: white; -fx-background-radius: 5;" text="Add Income">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>

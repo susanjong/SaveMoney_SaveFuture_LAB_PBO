@@ -1,14 +1,15 @@
 package com.finance.finance_lab_pbo;
 
+import java.io.IOException;
+
 import javafx.application.Application;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
-import javafx.scene.Scene;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import java.io.IOException;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 
 public class Main extends Application {
     private static Stage primaryStage;
@@ -193,15 +194,6 @@ public class Main extends Application {
             FXMLLoader loader = new FXMLLoader(Main.class.getResource("/com/finance/finance_login/changepassword.fxml"));
             Parent root = loader.load();
             
-            // Get the controller and pass the username if controller has setUsername method
-            // Note: Uncomment and modify this section if your ChangePasswordController has setUsername method
-            /*
-            ChangePasswordController controller = loader.getController();
-            if (controller != null) {
-                controller.setUsername(username);
-            }
-            */
-            
             Scene scene = new Scene(root);
             Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
             
@@ -228,15 +220,6 @@ public class Main extends Application {
         try {
             FXMLLoader loader = new FXMLLoader(Main.class.getResource("/resources/com/finance/finance_lab_pbo/Dashboard.fxml"));
             Parent root = loader.load();
-            
-            // Get the controller and pass the username if controller has setUsername method
-            // Note: Uncomment and modify this section if your DashboardController has setUsername method
-            /*
-            DashboardController controller = loader.getController();
-            if (controller != null) {
-                controller.setUsername(username);
-            }
-            */
             
             Scene scene = new Scene(root);
             Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
