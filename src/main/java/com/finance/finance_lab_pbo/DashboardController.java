@@ -286,7 +286,7 @@ public class DashboardController implements Initializable {
             String fxmlFile = "";
             
             if (source == profileBtn) {
-                fxmlFile = "/com/finance/finance_lab_pbo/Profile.fxml";
+                fxmlFile = "/com/finance/finance_lab_pbo/profile.fxml";
             } else if (source == dashboardBtn) {
                 fxmlFile = "/com/finance/finance_lab_pbo/Dashboard.fxml";
             } else if (source == incomeBtn) {

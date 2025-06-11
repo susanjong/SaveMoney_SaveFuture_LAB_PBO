@@ -41,8 +41,7 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
         primaryStage = stage;
 
-        // Start with the dashboard
-        showDashboard();
+        showRegisterScreen();
     }
     
     // Method to get the primary stage
@@ -79,59 +78,90 @@ public class Main extends Application {
         }
     }
     
-    // Method to show login screen
+    // Method to show login screen - FIXED PATH
     public static void showLoginScreen() {
-        try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/com/finance/finance_login/Login.fxml"));
-            Parent root = loader.load();
-            Scene scene = new Scene(root);
-
-            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-
-            primaryStage.setTitle("Personal Finance Tracker - Login");
-            primaryStage.setScene(scene);
-            primaryStage.setX(screenBounds.getMinX());
-            primaryStage.setY(screenBounds.getMinY());
-            primaryStage.setWidth(screenBounds.getWidth());
-            primaryStage.setHeight(screenBounds.getHeight());
+        // Try multiple paths for Login.fxml
+        FXMLLoader loader = null;
         
-            primaryStage.setMinWidth(800);  
-            primaryStage.setMinHeight(600);
-            
-            primaryStage.show();
-            
-        } catch (IOException e) {
-            System.err.println("Error loading Login.fxml: " + e.getMessage());
-            e.printStackTrace();
-            showAlert("Loading Error", "Could not load the login screen: " + e.getMessage());
+        // Try path 1: root resources
+        try {
+            loader = new FXMLLoader(Main.class.getResource("/Login.fxml"));
+            loader.load();
+        } catch (Exception e1) {
+            // Try path 2: same package
+            try {
+                loader = new FXMLLoader(Main.class.getResource("Login.fxml"));
+                loader.load();
+            } catch (Exception e2) {
+                // Try path 3: with package path
+                try {
+                    loader = new FXMLLoader(Main.class.getResource("/com/finance/finance_lab_pbo/Login.fxml"));
+                    loader.load();
+                } catch (Exception e3) {
+                    // Create a simple login if FXML not found
+                    System.err.println("Login.fxml not found. Creating simple login.");
+                    return;
+                }
+            }
         }
+        
+        Parent root = (Parent) loader.getRoot();
+        Scene scene = new Scene(root);
+
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+        primaryStage.setTitle("Personal Finance Tracker - Login");
+        primaryStage.setScene(scene);
+        primaryStage.setX(screenBounds.getMinX());
+        primaryStage.setY(screenBounds.getMinY());
+        primaryStage.setWidth(screenBounds.getWidth());
+        primaryStage.setHeight(screenBounds.getHeight());
+      
+        primaryStage.setMinWidth(800);  
+        primaryStage.setMinHeight(600);
+        
+        primaryStage.show();
     }
     
     // Method to show register screen
     public static void showRegisterScreen() {
-        try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/com/finance/finance_login/Register.fxml"));
-            Parent root = loader.load();
-            Scene scene = new Scene(root);
-            
-            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-
-            primaryStage.setTitle("Personal Finance Tracker - Register");
-            primaryStage.setScene(scene);
-            primaryStage.setX(screenBounds.getMinX());
-            primaryStage.setY(screenBounds.getMinY());
-            primaryStage.setWidth(screenBounds.getWidth());
-            primaryStage.setHeight(screenBounds.getHeight());
+        // Try multiple paths for Register.fxml
+        FXMLLoader loader = null;
         
-            primaryStage.setMinWidth(800);  
-            primaryStage.setMinHeight(600);
-            
-            primaryStage.show();
-        } catch (IOException e) {
-            System.err.println("Error loading Register.fxml: " + e.getMessage());
-            e.printStackTrace();
-            showAlert("Loading Error", "Could not load the register screen: " + e.getMessage());
+        try {
+            loader = new FXMLLoader(Main.class.getResource("/Register.fxml"));
+            loader.load();
+        } catch (Exception e1) {
+            try {
+                loader = new FXMLLoader(Main.class.getResource("Register.fxml"));
+                loader.load();
+            } catch (Exception e2) {
+                try {
+                    loader = new FXMLLoader(Main.class.getResource("/com/finance/finance_lab_pbo/Register.fxml"));
+                    loader.load();
+                } catch (Exception e3) {
+                    System.err.println("Register.fxml not found.");
+                    return;
+                }
+            }
         }
+        
+        Parent root = (Parent) loader.getRoot();
+        Scene scene = new Scene(root);
+        
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+        primaryStage.setTitle("Personal Finance Tracker - Register");
+        primaryStage.setScene(scene);
+        primaryStage.setX(screenBounds.getMinX());
+        primaryStage.setY(screenBounds.getMinY());
+        primaryStage.setWidth(screenBounds.getWidth());
+        primaryStage.setHeight(screenBounds.getHeight());
+      
+        primaryStage.setMinWidth(800);  
+        primaryStage.setMinHeight(600);
+        
+        primaryStage.show();
     }
     
     // Method to show dashboard
