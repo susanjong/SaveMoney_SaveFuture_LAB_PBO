@@ -1,10 +1,19 @@
 package com.finance.finance_lab_pbo;
 
+import java.io.IOException;
+import java.net.URL;
+
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Stage;
 
 public class ProfileController {
 
@@ -27,7 +36,7 @@ public class ProfileController {
     private Button updateBtn;
 
     @FXML
-    private Button dashboardBtn1;
+    private Button dashboardBtn;
 
     @FXML
     private Button profileBtn;
@@ -124,13 +133,66 @@ public class ProfileController {
      * This method can be expanded based on your navigation requirements
      */
     @FXML
-    private void handleNavigation() {
-        // Navigation logic can be implemented here
-        // For example, switching between different views/scenes
+    void handleNavigation(ActionEvent event) {
+        Object source = event.getSource();
+        
+        try {
+            String fxmlFile = "";
+            
+            if (source == profileBtn) {
+                fxmlFile = "/com/finance/finance_lab_pbo/Profile.fxml";
+            } else if (source == dashboardBtn) {
+                fxmlFile = "/com/finance/finance_lab_pbo/Dashboard.fxml";
+            } else if (source == incomeBtn) {
+                fxmlFile = "/com/finance/finance_lab_pbo/Income.fxml";
+            } else if (source == spendingBtn) {
+                fxmlFile = "/com/finance/finance_lab_pbo/Spending.fxml";
+            } else {
+                return; // Unknown button
+            }
+            
+            if (!fxmlFile.isEmpty()) {
+                URL url = getClass().getResource(fxmlFile);
+                
+                if (url == null) {
+                    // Try alternative path format if the first attempt fails
+                    String altPath = fxmlFile.replace("/com/finance/finance_lab_pbo/", "/");
+                    url = getClass().getResource(altPath);
+                    
+                    if (url == null) {
+                        // Try one more alternative - without leading slash
+                        String noSlashPath = fxmlFile.substring(1);
+                        url = getClass().getClassLoader().getResource(noSlashPath);
+                        
+                        if (url == null) {
+                            showAlert("Navigation Error", 
+                                "Could not find FXML file: " + fxmlFile + 
+                                "\nPlease check if the file exists in the resources folder.");
+                            return;
+                        }
+                    }
+                }
+                
+                Parent root = FXMLLoader.load(url);
+                Stage stage = (Stage) ((Button) source).getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.show();
+            }
+            
+        } catch (IOException e) {
+            showAlert("Navigation Error", 
+                    "Could not navigate to the requested page: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
-        // Get the source button to determine which navigation was clicked
-        // This is a basic implementation - you can expand it based on your needs
-        System.out.println("Navigation button clicked");
+    private void showAlert(String title, String message) {
+    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+    alert.setTitle(title);
+    alert.setHeaderText(null);
+    alert.setContentText(message);
+    alert.showAndWait();
     }
 
     /**

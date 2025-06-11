@@ -331,6 +331,7 @@ public class DashboardController implements Initializable {
         }
     }
 
+    
     @FXML
     private void showIncomeDetails() {
         String selectedMonth = periodComboBox.getValue();

@@ -512,19 +512,17 @@ public class IncomeController implements Initializable {
             } else if (source == spendingBtn) {
                 fxmlFile = "/com/finance/finance_lab_pbo/Spending.fxml";
             } else {
-                return; // Unknown button
+                return;
             }
             
             if (!fxmlFile.isEmpty()) {
                 URL url = getClass().getResource(fxmlFile);
                 
                 if (url == null) {
-                    // Try alternative path format if the first attempt fails
                     String altPath = fxmlFile.replace("/com/finance/finance_lab_pbo/", "/");
                     url = getClass().getResource(altPath);
                     
                     if (url == null) {
-                        // Try one more alternative - without leading slash
                         String noSlashPath = fxmlFile.substring(1);
                         url = getClass().getClassLoader().getResource(noSlashPath);
                         
