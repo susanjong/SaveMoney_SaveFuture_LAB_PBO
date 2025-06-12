@@ -15,7 +15,7 @@
     <children>
 
         <!-- Main Content Area -->
-        <AnchorPane layoutX="201.0" layoutY="10.0" prefHeight="834.0" prefWidth="1339.0" style="-fx-background-color: linear-gradient(to bottom, #4a90a4, #357a93);">
+        <AnchorPane layoutX="201.0" layoutY="10.0" prefHeight="834.0" prefWidth="1339.0" style="-fx-background-color: linear-gradient(to bottom, #52C4D8 0%, #7DD3DF 25%, #A8E6ED 50%, #D4F4F8 75%, #FFFFFF 100%);">
             <children>
 
                 <!-- Profile Card -->
