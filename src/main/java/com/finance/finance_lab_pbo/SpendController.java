@@ -160,21 +160,24 @@ public class SpendController implements Initializable {
     
     private void loadAllSpendingFromDatabase() {
         allSpendingData.clear();
-        String sql = "SELECT id, category, description, amount, date FROM spending ORDER BY date DESC";
+        String sql = "SELECT * FROM spending WHERE user_id = ? ORDER BY date ASC";
         
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            while (rs.next()) {
-                SpendingData data = new SpendingData(
-                    rs.getInt("id"),
-                    rs.getString("category"),
-                    rs.getString("description"),
-                    rs.getBigDecimal("amount"),
-                    rs.getDate("date").toLocalDate()
-                );
-                allSpendingData.add(data);
+            stmt.setInt(1, UserSession.getCurrentUserId()); // Set parameter user_id
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    SpendingData data = new SpendingData(
+                        rs.getInt("id"),
+                        rs.getString("category"),
+                        rs.getString("description"),
+                        rs.getBigDecimal("amount"),
+                        rs.getDate("date").toLocalDate()
+                    );
+                    allSpendingData.add(data);
+                }
             }
         } catch (SQLException e) {
             showAlert("Database Error", "Failed to load spending data: " + e.getMessage());
@@ -335,15 +338,16 @@ public class SpendController implements Initializable {
         try {
             BigDecimal amount = new BigDecimal(amountText.replace(",", "").replace(".", ""));
             
-            String sql = "INSERT INTO spending (category, description, amount, date) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO spending (category, description, amount, date, user_id) VALUES (?, ?, ?, ?, ?)";
             
             try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 
                 stmt.setString(1, category.name());
                 stmt.setString(2, description);
                 stmt.setBigDecimal(3, amount);
                 stmt.setDate(4, java.sql.Date.valueOf(date));
+                stmt.setInt(5, UserSession.getCurrentUserId());
                 
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected > 0) {

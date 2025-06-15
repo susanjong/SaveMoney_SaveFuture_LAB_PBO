@@ -130,21 +130,25 @@ public class IncomeController implements Initializable {
 
     private void loadAllIncomeFromDatabase() {
         allIncomeData.clear();
-        String sql = "SELECT * FROM income ORDER BY id";
+        String sql = "SELECT * FROM income WHERE user_id = ? ORDER BY id";
         
         try (Connection conn = DatabaseConnection.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            ResultSet rs = stmt.executeQuery()) {
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            while (rs.next()) {
-                Income income = new Income(
-                    rs.getString("source"),
-                    rs.getBigDecimal("amount"),
-                    rs.getDate("date").toLocalDate(),
-                    rs.getString("description")
-                );
-                income.setId(rs.getInt("id"));
-                allIncomeData.add(income);
+            // Set parameter user_id dari user yang sedang login
+            stmt.setInt(1, UserSession.getCurrentUserId());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Income income = new Income(
+                        rs.getString("source"),
+                        rs.getBigDecimal("amount"),
+                        rs.getDate("date").toLocalDate(),
+                        rs.getString("description")
+                    );
+                    income.setId(rs.getInt("id"));
+                    allIncomeData.add(income);
+                }
             }
             
         } catch (SQLException e) {
@@ -334,16 +338,17 @@ public class IncomeController implements Initializable {
             // Create Income object using OOP model
             Income income = new Income(source, amount, date, description);
             
-            // Save to database
-            String sql = "INSERT INTO income (source, amount, date, description) VALUES (?, ?, ?, ?)";
+            // Save to database - tambah user_id
+            String sql = "INSERT INTO income (source, amount, date, description, user_id) VALUES (?, ?, ?, ?, ?)";
             
             try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 
                 stmt.setString(1, income.getSource());
                 stmt.setBigDecimal(2, income.getAmount());
                 stmt.setDate(3, Date.valueOf(income.getDate()));
                 stmt.setString(4, income.getDescription());
+                stmt.setInt(5, UserSession.getCurrentUserId()); // Parameter ke-5 untuk user_id
                 
                 int rowsAffected = stmt.executeUpdate();
                 

@@ -80,20 +80,23 @@ public class DashboardController implements Initializable {
     private void loadDataFromDatabase() {
         allTransactions = new ArrayList<>();
         
-        String incomeQuery = "SELECT * FROM income ORDER BY date DESC";
+        String incomeQuery = "SELECT * FROM income WHERE user_id = ? ORDER BY date DESC";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(incomeQuery);
-             ResultSet rs = stmt.executeQuery()) {
+            PreparedStatement stmt = conn.prepareStatement(incomeQuery)) {
             
-            while (rs.next()) {
-                Income income = new Income(
-                    rs.getString("source"),
-                    rs.getBigDecimal("amount"),
-                    rs.getDate("date").toLocalDate(),
-                    rs.getString("description")
-                );
-                income.setId(rs.getInt("id"));
-                allTransactions.add(income);
+            stmt.setInt(1, UserSession.getCurrentUserId()); // Set parameter user_id
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Income income = new Income(
+                        rs.getString("source"),
+                        rs.getBigDecimal("amount"),
+                        rs.getDate("date").toLocalDate(),
+                        rs.getString("description")
+                    );
+                    income.setId(rs.getInt("id"));
+                    allTransactions.add(income);
+                }
             }
             
         } catch (SQLException e) {
@@ -101,20 +104,23 @@ public class DashboardController implements Initializable {
             showAlert("Database Error", "Failed to load income data: " + e.getMessage());
         }
         
-        String spendingQuery = "SELECT * FROM spending ORDER BY date DESC";
+        String spendingQuery = "SELECT * FROM spending WHERE user_id = ? ORDER BY date DESC";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(spendingQuery);
-             ResultSet rs = stmt.executeQuery()) {
+            PreparedStatement stmt = conn.prepareStatement(spendingQuery)) {
             
-            while (rs.next()) {
-                Spending spending = new Spending(
-                    rs.getString("category"),
-                    rs.getBigDecimal("amount"),
-                    rs.getDate("date").toLocalDate(),
-                    rs.getString("description")
-                );
-                spending.setId(rs.getInt("id"));
-                allTransactions.add(spending);
+            stmt.setInt(1, UserSession.getCurrentUserId()); // Set parameter user_id
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Spending spending = new Spending(
+                        rs.getString("category"),
+                        rs.getBigDecimal("amount"),
+                        rs.getDate("date").toLocalDate(),
+                        rs.getString("description")
+                    );
+                    spending.setId(rs.getInt("id"));
+                    allTransactions.add(spending);
+                }
             }
             
         } catch (SQLException e) {
