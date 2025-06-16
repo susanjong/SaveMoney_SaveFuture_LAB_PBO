@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.control.PasswordField;
 import javafx.stage.Stage;
 
 public class ChangePasswordController {
@@ -17,10 +18,10 @@ public class ChangePasswordController {
     private TextField emailField;
 
     @FXML
-    private TextField passwordField;
+    private PasswordField passwordField;
 
     @FXML
-    private Button loginButton; // Keep original button name to match FXML
+    private Button loginButton; // This now matches the FXML fx:id
 
     @FXML
     private void handleLogin() { // Keep original method name to match FXML
@@ -110,8 +111,8 @@ public class ChangePasswordController {
      * Navigasi ke halaman login
      */
     private void navigateToLogin() throws IOException {
-        // Load FXML file untuk login page
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/Login.fxml"));
+        // Load FXML file untuk login page - update path to match your project structure
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/finance/finance_lab_pbo/login.fxml"));
         Parent root = loader.load();
 
         // Dapatkan stage saat ini

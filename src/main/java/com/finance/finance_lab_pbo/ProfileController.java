@@ -471,17 +471,50 @@ void handleNavigation(ActionEvent event) {
      */
     @FXML
     private void changePassword(ActionEvent event) {
-        // You can implement password change functionality here
-        showAlert(Alert.AlertType.INFORMATION, "Change Password", "Password change functionality will be implemented soon.");
+        try {
+        // Load change password page
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/finance/finance_lab_pbo/changepassword.fxml"));
+        Parent root = loader.load();
+        
+        // Get current stage
+        Stage currentStage = (Stage) ((Node) profileBtn).getScene().getWindow();
+        
+        // Set new scene
+        Scene scene = new Scene(root);
+        currentStage.setScene(scene);
+        currentStage.setTitle("Change Password - Finance Lab");
+        currentStage.show();
+        
+    } catch (IOException e) {
+        e.printStackTrace();
+        showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not load change password page.");
     }
+}
 
     /**
      * Alternative method name for change password (backwards compatibility)
      */
     @FXML
     private void handleChangePassword(ActionEvent event) {
-        changePassword(event);
+       try {
+        // Load change password page
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/finance/finance_lab_pbo/changepassword.fxml"));
+        Parent root = loader.load();
+        
+        // Get current stage
+        Stage currentStage = (Stage) ((Node) profileBtn).getScene().getWindow();
+        
+        // Set new scene
+        Scene scene = new Scene(root);
+        currentStage.setScene(scene);
+        currentStage.setTitle("Change Password - Finance Lab");
+        currentStage.show();
+        
+    } catch (IOException e) {
+        e.printStackTrace();
+        showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not load change password page.");
     }
+}
 
   /**
  * Handle delete account button click - SIMPLE VERSION
@@ -514,7 +547,7 @@ private void deleteAccount(ActionEvent event) {
         Optional<ButtonType> finalResult = finalConfirm.showAndWait();
         if (finalResult.isPresent() && finalResult.get() == finalDeleteButton) {
             // Perform account deletion
-            if (performSimpleAccountDeletion()) {
+            if (performCompleteAccountDeletion()) {
                 showAlert(Alert.AlertType.INFORMATION, "Account Deleted", 
                          "Your account has been successfully deleted.");
                 
@@ -530,53 +563,82 @@ private void deleteAccount(ActionEvent event) {
 }
 
 /**
- * Simple account deletion - just deletes the user record
+ * Complete account deletion with cascading delete for all related records
+ * Based on your database schema: users, spending, income tables
  * @return true if successful, false otherwise
  */
-private boolean performSimpleAccountDeletion() {
-    String deleteUserQuery = "DELETE FROM users WHERE id = ?";
+private boolean performCompleteAccountDeletion() {
+    Connection conn = null;
     
-    try (Connection conn = DatabaseConnection.getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(deleteUserQuery)) {
+    try {
+        conn = DatabaseConnection.getConnection();
         
-        pstmt.setInt(1, currentUserId);
-        int rowsAffected = pstmt.executeUpdate();
+        // Start transaction to ensure all deletions succeed or fail together
+        conn.setAutoCommit(false);
         
-        if (rowsAffected > 0) {
-            System.out.println("User account deleted successfully");
-            return true;
-        } else {
-            System.err.println("Failed to delete user account - no rows affected");
-            return false;
+        // Delete in reverse order of foreign key dependencies
+        // (child tables first, then parent table)
+        
+        // 1. Delete spending records
+        String deleteSpendingQuery = "DELETE FROM spending WHERE user_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteSpendingQuery)) {
+            pstmt.setInt(1, currentUserId);
+            int spendingDeleted = pstmt.executeUpdate();
+            System.out.println("Deleted " + spendingDeleted + " spending records");
         }
         
+        // 2. Delete income records
+        String deleteIncomeQuery = "DELETE FROM income WHERE user_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteIncomeQuery)) {
+            pstmt.setInt(1, currentUserId);
+            int incomeDeleted = pstmt.executeUpdate();
+            System.out.println("Deleted " + incomeDeleted + " income records");
+        }
+        
+        // 3. Finally, delete the user record
+        String deleteUserQuery = "DELETE FROM users WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteUserQuery)) {
+            pstmt.setInt(1, currentUserId);
+            int userDeleted = pstmt.executeUpdate();
+            
+            if (userDeleted == 0) {
+                throw new SQLException("Failed to delete user record - user not found");
+            }
+            System.out.println("User account deleted successfully");
+        }
+        
+        // Commit the transaction
+        conn.commit();
+        System.out.println("Account deletion completed successfully");
+        return true;
+        
     } catch (SQLException e) {
-        System.err.println("Error deleting account: " + e.getMessage());
+        System.err.println("Error during account deletion: " + e.getMessage());
         e.printStackTrace();
+        
+        // Rollback transaction on error
+        if (conn != null) {
+            try {
+                conn.rollback();
+                System.out.println("Transaction rolled back due to error");
+            } catch (SQLException rollbackEx) {
+                System.err.println("Error rolling back transaction: " + rollbackEx.getMessage());
+            }
+        }
         return false;
+        
+    } finally {
+        // Restore auto-commit and close connection
+        if (conn != null) {
+            try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (SQLException e) {
+                System.err.println("Error closing connection: " + e.getMessage());
+            }
+        }
     }
 }
 
-    /**
-     * Navigate to specified page
-     * @param fxmlPath Path to FXML file
-     * @param title Window title
-     */
-    private void navigateToPage(String fxmlPath, String title) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            Parent root = loader.load();
-            
-            Stage stage = (Stage) usernameLabel.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle(title);
-            stage.show();
-            
-        } catch (IOException e) {
-            System.err.println("Error navigating to " + title + ": " + e.getMessage());
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to navigate to " + title + " page.");
-        }
-    }
+
 }
