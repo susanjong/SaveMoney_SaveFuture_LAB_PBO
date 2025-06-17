@@ -39,6 +39,7 @@ Menu ini terletak di **Sidebar** dan menyajikan rincian keuangan secara menyelur
 * **Manajemen Aktivitas**
 
   * Tambahkan aktivitas baru untuk income atau spending
+  * Update aktivitas baru yang ingin diubah
   * Hapus aktivitas yang sudah tidak relevan
   * Catat setiap nominal dengan akurat
 * **Tabel Pengeluaran**
