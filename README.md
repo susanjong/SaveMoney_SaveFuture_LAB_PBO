@@ -2,7 +2,7 @@
 1. Susan Jong (231401014) > Lab 3
 2. Clarissa Halim (231401020) > Lab 3
 3. Ferarine (231401095) > Lab 4
-4. Fathurrahman Nasution (2314010110) > Lab 4
+4. Fathurrahman Nasution (23140101110) > Lab 4
 
 Kelas :Kom B 
 
